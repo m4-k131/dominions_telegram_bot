@@ -10,8 +10,9 @@ import dom6_lib
 
 # --- Configuration ---
 
-CONFIG_FILE = 'config.json'
+CONFIG_FILE = "config.json"
 CACHE_DIR = Path("cached_states")
+
 
 def load_config():
     if not os.path.exists(CONFIG_FILE):
@@ -20,14 +21,17 @@ def load_config():
     with open(CONFIG_FILE) as f:
         return json.load(f)
 
+
 def get_bot_token():
-    token = os.getenv('TELEGRAM_BOT_TOKEN')
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
         print("Error: TELEGRAM_BOT_TOKEN env var not set.")
         sys.exit(1)
     return token
 
+
 # --- Command Handlers ---
+
 
 def handle_start_command(bot_token, chat_id, input_text, default_base_url):
     """
@@ -47,23 +51,22 @@ def handle_start_command(bot_token, chat_id, input_text, default_base_url):
     try:
         html = dom6_lib.fetch_game_html(target_url)
         state = dom6_lib.parse_game_state(html)
-        
+
         if not state:
             raise ValueError("Could not parse game data")
-        state['url'] = target_url
-        existing_state = dom6_lib.load_state(state['game_name'], CACHE_DIR)
+        state["url"] = target_url
+        existing_state = dom6_lib.load_state(state["game_name"], CACHE_DIR)
         if existing_state:
-            state['subscribers'] = existing_state.get('subscribers', [])
+            state["subscribers"] = existing_state.get("subscribers", [])
         else:
-            state['subscribers'] = []
+            state["subscribers"] = []
 
-        if chat_id not in state['subscribers']:
-            state['subscribers'].append(chat_id)
+        if chat_id not in state["subscribers"]:
+            state["subscribers"].append(chat_id)
         dom6_lib.save_state(state, CACHE_DIR)
         dom6_lib.send_telegram(bot_token, [chat_id], f"✅ Game found! Subscribed to <b>{state['game_name']}</b>.")
-        unfinished = [n for n, s in state['nations'].items() if s == "-"]
-        status_msg = (f"📊 <b>Current Status</b>\n"
-                      f"Turn: <b>{state['turn']}</b>\n")
+        unfinished = [n for n, s in state["nations"].items() if s == "-"]
+        status_msg = f"📊 <b>Current Status</b>\nTurn: <b>{state['turn']}</b>\n"
         if unfinished:
             # Join list with commas
             status_msg += f"⏳ <b>Waiting ({len(unfinished)}):</b> {', '.join(unfinished)}"
@@ -71,12 +74,13 @@ def handle_start_command(bot_token, chat_id, input_text, default_base_url):
             status_msg += "✅ All turns played (processing?)"
         status_msg += f"\n<a href='{target_url}'>Link to Status Page</a>"
         dom6_lib.send_telegram(bot_token, [chat_id], status_msg)
-        
+
     except dom6_lib.GameNotFoundError:
         dom6_lib.send_telegram(bot_token, [chat_id], f"❌ Game not found at:\n{target_url}")
     except Exception as e:
         print(f"Error verifying game {target_url}: {e}")
         dom6_lib.send_telegram(bot_token, [chat_id], "⚠️ Error accessing game. Check bot logs.")
+
 
 def handle_stop_command(bot_token, chat_id, game_name):
     game_name = game_name.strip()
@@ -93,49 +97,51 @@ def handle_stop_command(bot_token, chat_id, game_name):
 
 def check_all_subscribed_games(config, bot_token):
     """Iterates through all JSON files in CACHE_DIR and checks for updates."""
-    default_base_url = config.get('base_game_url', 'http://www.illwinter.com/dom6')
+    default_base_url = config.get("base_game_url", "http://www.illwinter.com/dom6")
     game_files = list(CACHE_DIR.glob("*.json"))
     for file_path in game_files:
         try:
             with open(file_path) as f:
                 prev_state = json.load(f)
-            
-            game_name = prev_state.get('game_name')
-            subscribers = prev_state.get('subscribers', [])
-            
+
+            game_name = prev_state.get("game_name")
+            subscribers = prev_state.get("subscribers", [])
+
             if not subscribers:
-                continue 
+                continue
 
             # Get URL: Prefer the one saved in JSON
-            target_url = prev_state.get('url')
+            target_url = prev_state.get("url")
             if not target_url:
                 target_url = f"{default_base_url.rstrip('/')}/{game_name}.html"
-            
+
             try:
                 html = dom6_lib.fetch_game_html(target_url)
                 curr_state = dom6_lib.parse_game_state(html)
-                
+
                 # Preserve meta-data
-                curr_state['subscribers'] = subscribers
-                curr_state['url'] = target_url 
-                
+                curr_state["subscribers"] = subscribers
+                curr_state["url"] = target_url
+
                 messages = dom6_lib.generate_change_messages(prev_state, curr_state, target_url)
                 for msg in messages:
                     print(f"[{game_name}] Sending update to {len(subscribers)} subs.")
                     dom6_lib.send_telegram(bot_token, subscribers, msg)
-                
+
                 # Save new state
                 dom6_lib.save_state(curr_state, CACHE_DIR)
-                
+
             except dom6_lib.GameNotFoundError:
                 print(f"[{game_name}] 404 Not Found at {target_url}")
             except Exception as e:
                 print(f"[{game_name}] Check failed: {e}")
-                
+
         except Exception as e:
             print(f"Error processing file {file_path}: {e}")
 
+
 # --- Main Loop ---
+
 
 def main():
     parser = argparse.ArgumentParser(description="The Pantokrators Herold - Dynamic Dom6 Bot")
@@ -145,12 +151,12 @@ def main():
     config = load_config()
     bot_token = get_bot_token()
     CACHE_DIR.mkdir(exist_ok=True)
-    
-    base_url = config.get('base_game_url', 'http://www.illwinter.com/dom6')
+
+    base_url = config.get("base_game_url", "http://www.illwinter.com/dom6")
 
     # Telegram polling offset
     last_update_id = 0
-    
+
     # Timing
     check_interval = max(60, int(args.minutes * 60)) if args.minutes else 0
     last_check_time = 0
@@ -160,19 +166,19 @@ def main():
     while True:
         # 1. Poll Telegram for Commands
         updates_data = dom6_lib.get_telegram_updates(bot_token, last_update_id + 1)
-        
-        if updates_data and updates_data.get('ok'):
-            for update in updates_data.get('result', []):
-                last_update_id = update['update_id']
-                
-                if 'message' in update and 'text' in update['message']:
-                    text = update['message']['text'].strip()
-                    chat_id = update['message']['chat']['id']
-                    
-                    if text.lower().startswith('start '):
-                        input_arg = text[6:] # Name OR URL
+
+        if updates_data and updates_data.get("ok"):
+            for update in updates_data.get("result", []):
+                last_update_id = update["update_id"]
+
+                if "message" in update and "text" in update["message"]:
+                    text = update["message"]["text"].strip()
+                    chat_id = update["message"]["chat"]["id"]
+
+                    if text.lower().startswith("start "):
+                        input_arg = text[6:]  # Name OR URL
                         handle_start_command(bot_token, chat_id, input_arg, base_url)
-                    elif text.lower().startswith('stop '):
+                    elif text.lower().startswith("stop "):
                         game_target = text[5:]
                         handle_stop_command(bot_token, chat_id, game_target)
 
@@ -183,7 +189,8 @@ def main():
             check_all_subscribed_games(config, bot_token)
             last_check_time = current_time
 
-        time.sleep(1) 
+        time.sleep(1)
+
 
 if __name__ == "__main__":
     main()
