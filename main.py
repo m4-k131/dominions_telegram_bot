@@ -39,27 +39,19 @@ def handle_start_command(bot_token, chat_id, input_text, default_base_url):
         dom6_lib.send_telegram(bot_token, [chat_id], "⚠️ Please specify a game name or URL.\nExample: <code>start te26</code>")
         return
 
-    # 1. Determine the Target URL
     if input_text.startswith("http"):
         target_url = input_text
-        # We don't know the name yet, the parser will get it
     else:
         target_url = f"{default_base_url.rstrip('/')}/{input_text}.html"
 
     try:
-        # 2. Fetch & Verify
         html = dom6_lib.fetch_game_html(target_url)
         state = dom6_lib.parse_game_state(html)
         
         if not state:
             raise ValueError("Could not parse game data")
-
-        # 3. Update State & Subscriber List
         state['url'] = target_url
-        
-        # Load existing subscribers if file exists
         existing_state = dom6_lib.load_state(state['game_name'], CACHE_DIR)
-        
         if existing_state:
             state['subscribers'] = existing_state.get('subscribers', [])
         else:
@@ -67,29 +59,17 @@ def handle_start_command(bot_token, chat_id, input_text, default_base_url):
 
         if chat_id not in state['subscribers']:
             state['subscribers'].append(chat_id)
-
-        # 4. Save to disk
         dom6_lib.save_state(state, CACHE_DIR)
-        
-        # 5. Send Notifications
-        # A) Confirmation
         dom6_lib.send_telegram(bot_token, [chat_id], f"✅ Game found! Subscribed to <b>{state['game_name']}</b>.")
-        
-        # B) Immediate Status Report
-        # Identify nations that haven't played (Status is usually "-")
         unfinished = [n for n, s in state['nations'].items() if s == "-"]
-        
         status_msg = (f"📊 <b>Current Status</b>\n"
                       f"Turn: <b>{state['turn']}</b>\n")
-        
         if unfinished:
             # Join list with commas
             status_msg += f"⏳ <b>Waiting ({len(unfinished)}):</b> {', '.join(unfinished)}"
         else:
             status_msg += "✅ All turns played (processing?)"
-            
         status_msg += f"\n<a href='{target_url}'>Link to Status Page</a>"
-        
         dom6_lib.send_telegram(bot_token, [chat_id], status_msg)
         
     except dom6_lib.GameNotFoundError:
@@ -110,14 +90,11 @@ def handle_stop_command(bot_token, chat_id, game_name):
     else:
         dom6_lib.send_telegram(bot_token, [chat_id], f"⚠️ You were not subscribed to <b>{game_name}</b>.")
 
-# --- Periodic Check Logic ---
 
 def check_all_subscribed_games(config, bot_token):
     """Iterates through all JSON files in CACHE_DIR and checks for updates."""
     default_base_url = config.get('base_game_url', 'http://www.illwinter.com/dom6')
-    
     game_files = list(CACHE_DIR.glob("*.json"))
-    
     for file_path in game_files:
         try:
             with open(file_path) as f:
@@ -161,7 +138,7 @@ def check_all_subscribed_games(config, bot_token):
 # --- Main Loop ---
 
 def main():
-    parser = argparse.ArgumentParser(description="The Iron Fly - Dynamic Dom6 Bot")
+    parser = argparse.ArgumentParser(description="The Pantokrators Herold - Dynamic Dom6 Bot")
     parser.add_argument("--minutes", "-m", type=float, help="Interval for game status checks (min 1).")
     args = parser.parse_args()
 
@@ -178,7 +155,7 @@ def main():
     check_interval = max(60, int(args.minutes * 60)) if args.minutes else 0
     last_check_time = 0
 
-    print("🦟 The Iron Fly is listening...")
+    print("The Pantokrators Herald is listening...")
 
     while True:
         # 1. Poll Telegram for Commands

@@ -44,10 +44,16 @@ def parse_game_state(html):
         'subscribers': [] # Default empty list for new games
     }
 
+    # Parse Nation Rows
     for row in rows[1:]:
         cols = row.find_all('td')
         if len(cols) >= 2:
-            nation_name = cols[0].get_text(strip=True)
+            # ORIGINAL: nation_name = cols[0].get_text(strip=True)
+            
+            # FIXED: Get text, split by comma, take the first part
+            raw_name = cols[0].get_text(strip=True)
+            nation_name = raw_name.split(',')[0].strip()
+            
             status = cols[1].get_text(strip=True)
             state['nations'][nation_name] = status
 
