@@ -6,13 +6,13 @@
 
 ## Features
 
-* **🦟 Dynamic Subscriptions:** Add or remove games directly from Telegram chat.
-* **⚔️ Turn Notifications:** Instant alerts when a new turn begins.
-* **📜 Order Tracking:** Notifications when a specific nation marks their turn as "Turn played".
-* **🌍 Multi-Server Support:** Works with the official server or custom URLs (e.g., Ulm, Snek).
-* **📊 Instant Status:** Returns the current turn number and list of unfinished nations immediately upon subscribing.
-* **💾 Persistence:** Remembers subscriptions and turn numbers across restarts via JSON caching.
-* **💀 Safety:** Automatically stops monitoring games that return 404 errors (Game Over).
+* ** Dynamic Subscriptions:** Add or remove games directly from Telegram chat.
+* ** Turn Notifications:** Instant alerts when a new turn begins.
+* ** Order Tracking:** Notifications when a specific nation marks their turn as "Turn played".
+* ** Multi-Server Support:** Works with the official server or custom URLs (e.g., Ulm, Snek).
+* ** Instant Status:** Returns the current turn number and list of unfinished nations immediately upon subscribing.
+* ** Persistence:** Remembers subscriptions and turn numbers across restarts via JSON caching.
+* ** Safety:** Automatically stops monitoring games that return 404 errors (Game Over).
 
 ## Prerequisites
 
