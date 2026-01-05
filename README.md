@@ -1,8 +1,8 @@
-# The Pantokrators Herold 
+# The Pantokrators Herald 
 *A Dynamic Discord/Telegram Bot for Dominions 6*
 
 
-**The Pantokrators Herold** is a Python-based bot that monitors Illwinter's Dominions 6 multiplayer servers. It acts as a mechanical scout, allowing users to subscribe to specific games via Telegram commands, track turn cycles, and receive alerts when nations submit their orders.
+**The Pantokrators Herald** is a Python-based bot that monitors Illwinter's Dominions 6 multiplayer servers. It acts as a mechanical scout, allowing users to subscribe to specific games via Telegram commands, track turn cycles, and receive alerts when nations submit their orders.
 
 ## Features
 
@@ -91,7 +91,7 @@ Once the bot is running, interact with it in your Telegram chat:
 
 > **User:** `start te26`
 
-> **The Pantokrators Herold:**
+> **The Pantokrators Herald:**
 > ✅ Game found! Subscribed to **te26**.
 > 📊 **Current Status**
 > Turn: **81**
@@ -100,7 +100,7 @@ Once the bot is running, interact with it in your Telegram chat:
 
 > **User:** `start http://ulm.illwinter.com/dom6/server/mygame.html`
 
-> **The Pantokrators Herold:** ✅ Game found! Subscribed to **mygame**.
+> **The Pantokrators Herald:** ✅ Game found! Subscribed to **mygame**.
 
 ## File Structure
 
