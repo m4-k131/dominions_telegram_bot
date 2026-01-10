@@ -6,14 +6,10 @@ import requests
 from bs4 import BeautifulSoup
 
 
-# --- Custom Exceptions ---
 class GameNotFoundError(Exception):
     """Raised when the game page returns a 404."""
 
     pass
-
-
-# --- 1. Networking & Parsing (Game) ---
 
 
 def fetch_game_html(url):
@@ -23,7 +19,7 @@ def fetch_game_html(url):
         return response.text
     except requests.exceptions.HTTPError as err:
         if err.response.status_code == 404:
-            raise GameNotFoundError(f"Game page not found: {url}")
+            raise GameNotFoundError(f"Game page not found: {url}") from err
         raise err
 
 
@@ -38,7 +34,7 @@ def parse_game_state(html):
     if not rows:
         return None
 
-    # Header format: "te26, turn 81"
+    # Header format: "$GAMENAME, turn $TURNINT"
     header_text = rows[0].get_text(strip=True)
     turn_match = re.search(r"turn\s+(\d+)", header_text, re.IGNORECASE)
 
@@ -53,19 +49,12 @@ def parse_game_state(html):
     for row in rows[1:]:
         cols = row.find_all("td")
         if len(cols) >= 2:
-            # ORIGINAL: nation_name = cols[0].get_text(strip=True)
-
-            # FIXED: Get text, split by comma, take the first part
             raw_name = cols[0].get_text(strip=True)
             nation_name = raw_name.split(",")[0].strip()
 
             status = cols[1].get_text(strip=True)
             state["nations"][nation_name] = status
-
     return state
-
-
-# --- 2. Storage (JSON Handling) ---
 
 
 def _get_filepath(game_name, cache_dir):
@@ -120,9 +109,6 @@ def remove_subscriber(game_name, chat_id, cache_dir):
     return False
 
 
-# --- 3. Telegram Logic ---
-
-
 def get_telegram_updates(bot_token, offset=None):
     """Fetches new messages from Telegram."""
     url = f"https://api.telegram.org/bot{bot_token}/getUpdates"
@@ -151,9 +137,6 @@ def send_telegram(bot_token, chat_ids, message):
             print(f"Failed to notify chat {chat_id}: {e}")
 
 
-# --- 4. Logic & Formatting ---
-
-
 def generate_change_messages(prev_state, curr_state, url):
     if not prev_state:
         return []
@@ -173,9 +156,7 @@ def generate_change_messages(prev_state, curr_state, url):
             prev_status = prev_state["nations"].get(nation)
             if prev_status != status and status == "Turn played":
                 changes.append(f"📜 <b>{nation}</b> sent their orders.")
-
         if changes:
             full_msg = f"🔮 <b>The Pantokrators Herold Reports</b> ({game_name})\n" + "\n".join(changes)
             messages.append(full_msg)
-
     return messages
